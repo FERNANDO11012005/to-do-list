@@ -1,26 +1,62 @@
-import { useState } from "react";
-
+import React, { useState, useEffect } from "react";
+import TaskInput from "./components/TaskInput"; // Importación correcta
+import TaskList from "./components/TaskList";
 
 function App() {
   const [newTask, setNewTask] = useState("");
   const [tasks, setTasks] = useState([]);
+  const [editingIndex, setEditingIndex] = useState(null); // Estado para saber si estamos editando
 
-  const addTask = () => {
+  useEffect(() => {
+    try {
+      const storedTasks = JSON.parse(localStorage.getItem("tasks"));
+      if (storedTasks) {
+        setTasks(storedTasks);
+      }
+    } catch (error) {
+      console.error("❌ Error al cargar tareas:", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (tasks.length > 0) {
+      localStorage.setItem("tasks", JSON.stringify(tasks));
+    } else {
+      localStorage.removeItem("tasks");
+    }
+  }, [tasks]);
+
+  const addOrUpdateTask = () => {
     if (newTask.trim() !== "") {
-      setTasks([...tasks, { text: newTask, completed: false }]);
+      if (editingIndex !== null) {
+        // 🛠 Editar tarea existente
+        const updatedTasks = tasks.map((task, i) =>
+          i === editingIndex ? { ...task, text: newTask } : task
+        );
+        setTasks(updatedTasks);
+        setEditingIndex(null); // Resetear estado de edición
+      } else {
+        // ➕ Agregar nueva tarea
+        setTasks([...tasks, { text: newTask, completed: false }]);
+      }
       setNewTask("");
     }
   };
 
-  const toggleTask = (index) => {
-    const updatedTasks = tasks.map((task, i) =>
-      i === index ? { ...task, completed: !task.completed } : task
-    );
-    setTasks(updatedTasks);
+  const editTask = (index) => {
+    setNewTask(tasks[index].text); // Cargar texto de la tarea en el input
+    setEditingIndex(index); // Guardar índice de la tarea que estamos editando
   };
 
   const deleteTask = (index) => {
     const updatedTasks = tasks.filter((_, i) => i !== index);
+    setTasks(updatedTasks);
+  };
+
+  const toggleComplete = (index) => {
+    const updatedTasks = tasks.map((task, i) =>
+      i === index ? { ...task, completed: !task.completed } : task
+    );
     setTasks(updatedTasks);
   };
 
@@ -30,49 +66,18 @@ function App() {
         <h1 className="text-4xl font-extrabold mb-4 text-center text-blue-400">
           ✅ TO DO LIST
         </h1>
-
-        {/* Input y Botón */}
-        <div className="flex gap-2 mb-4">
-          <input
-            type="text"
-            className="border p-3 w-full rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-white"
-            placeholder="Nueva tarea..."
-            value={newTask}
-            onChange={(e) => setNewTask(e.target.value)}
-          />
-          <button
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-bold transition-all"
-            onClick={addTask}
-          >
-            +
-          </button>
-        </div>
-
-        {/* Lista de Tareas */}
-        <ul className="space-y-2">
-          {tasks.map((task, index) => (
-            <li
-              key={index}
-              className={`flex justify-between items-center p-3 border rounded-md cursor-pointer transition-all shadow-lg ${
-                task.completed
-                  ? "bg-gray-700 text-red-500 line-through"
-                  : "bg-gray-900 text-white"
-              }`}
-              onClick={() => toggleTask(index)}
-            >
-              <span className="font-medium">{task.text}</span>
-              <button
-                className="bg-red-700 hover:bg-red-800 text-white px-3 py-1 rounded-md transition-all"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  deleteTask(index);
-                }}
-              >
-                ✖
-              </button>
-            </li>
-          ))}
-        </ul>
+        <TaskInput
+          newTask={newTask}
+          setNewTask={setNewTask}
+          addOrUpdateTask={addOrUpdateTask}
+          editingIndex={editingIndex}
+        />
+        <TaskList
+          tasks={tasks}
+          editTask={editTask}
+          deleteTask={deleteTask}
+          toggleComplete={toggleComplete}
+        />
       </div>
     </div>
   );
