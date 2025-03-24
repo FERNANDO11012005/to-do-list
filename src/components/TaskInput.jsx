@@ -1,6 +1,6 @@
 import React from "react";
 
-const TaskInput = ({ newTask, setNewTask, addOrUpdateTask, editingIndex }) => {
+const TaskInput = ({ newTask, setNewTask, addOrUpdateTask, editingIndex, cancelEdit }) => {
   return (
     <div className="flex gap-2 mb-4">
       <input
@@ -11,6 +11,14 @@ const TaskInput = ({ newTask, setNewTask, addOrUpdateTask, editingIndex }) => {
         onChange={(e) => setNewTask(e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && addOrUpdateTask()}
       />
+      {editingIndex !== null && (
+        <button
+          onClick={cancelEdit}
+          className="px-3 py-2 text-gray-300 rounded-md hover:text-gray-500 transition-all duration-300"
+        >
+          ✖
+        </button>
+      )}
       <button
         className={`px-4 py-2 rounded-md font-bold transition-all duration-300 ${
           newTask.trim() === ""
@@ -19,7 +27,6 @@ const TaskInput = ({ newTask, setNewTask, addOrUpdateTask, editingIndex }) => {
         } text-white`}
         onClick={addOrUpdateTask}
         disabled={newTask.trim() === ""}
-        title={editingIndex !== null ? "Guardar edición" : "Añadir nueva tarea"}
       >
         {editingIndex !== null ? "Editar" : "Añadir"}
       </button>

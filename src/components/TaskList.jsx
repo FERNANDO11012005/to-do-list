@@ -2,28 +2,29 @@ import React from "react";
 import TaskItem from "./TaskItem";
 
 const TaskList = ({ tasks, editTask, deleteTask, toggleComplete }) => {
-  if (!tasks || tasks.length === 0) {
+  if (!tasks.length) {
     return (
-      <p className="text-center text-gray-400 mt-4" aria-live="polite">
+      <p className="text-center text-gray-400 mt-4" role="alert">
         No hay tareas pendientes.
       </p>
     );
   }
 
-  const allCompleted = tasks.every(task => task.completed);
+  // Ordenar tareas: No completadas arriba, completadas abajo
+  const sortedTasks = [...tasks].sort((a, b) => a.completed - b.completed || b.id - a.id);
 
   return (
     <div className="mt-4">
-      {allCompleted && (
+      {tasks.every(task => task.completed) && (
         <p className="text-center text-green-400 font-semibold transition-opacity duration-500">
-            Todas las tareas están completadas 
+          🎉 Todas las tareas están completadas.
         </p>
       )}
 
       <ul className="space-y-2">
-        {tasks.map((task, index) => (
+        {sortedTasks.map((task, index) => (
           <TaskItem
-            key={index}
+            key={task.id}
             task={task}
             index={index}
             editTask={editTask}
@@ -37,4 +38,3 @@ const TaskList = ({ tasks, editTask, deleteTask, toggleComplete }) => {
 };
 
 export default TaskList;
-

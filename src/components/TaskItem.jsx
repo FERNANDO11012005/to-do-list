@@ -1,7 +1,7 @@
 import React from "react";
 
 const TaskItem = ({ task, index, editTask, deleteTask, toggleComplete }) => {
-  if (!task) return null; // Previene errores si task es undefined
+  if (!task) return null;
 
   return (
     <li
@@ -9,19 +9,17 @@ const TaskItem = ({ task, index, editTask, deleteTask, toggleComplete }) => {
         task.completed ? "bg-green-700 text-gray-300" : "bg-gray-700 text-white"
       }`}
     >
-      {/* Texto de la tarea (solo editable si NO está completada) */}
       <span
         className={`flex-1 text-lg transition-all duration-300 ${
           task.completed
             ? "line-through text-gray-400 cursor-not-allowed"
             : "cursor-pointer hover:underline"
         }`}
-        onClick={() => !task.completed && editTask(index)} // Solo permite edición si no está completada
+        onClick={() => !task.completed && editTask(index)}
       >
         {task.text}
       </span>
 
-      {/* Botones de completar y borrar */}
       <div className="flex gap-2">
         <button
           onClick={() => toggleComplete(index)}

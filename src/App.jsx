@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from "react";
-import TaskInput from "./components/TaskInput"; // Importación correcta
+import TaskInput from "./components/TaskInput";
 import TaskList from "./components/TaskList";
+import Notification from "./components/Notification"; // Notificación agregada
 
 function App() {
   const [newTask, setNewTask] = useState("");
   const [tasks, setTasks] = useState([]);
-  const [editingIndex, setEditingIndex] = useState(null); // Estado para saber si estamos editando
+  const [editingIndex, setEditingIndex] = useState(null);
+  const [notification, setNotification] = useState(null);
 
+  // Cargar tareas desde localStorage al iniciar
   useEffect(() => {
     try {
       const storedTasks = JSON.parse(localStorage.getItem("tasks"));
@@ -18,6 +21,7 @@ function App() {
     }
   }, []);
 
+  // Guardar tareas en localStorage cuando cambian
   useEffect(() => {
     if (tasks.length > 0) {
       localStorage.setItem("tasks", JSON.stringify(tasks));
@@ -26,38 +30,64 @@ function App() {
     }
   }, [tasks]);
 
+  const showNotification = (message) => {
+    setNotification(message);
+    setTimeout(() => setNotification(null), 3000);
+  };
+
   const addOrUpdateTask = () => {
     if (newTask.trim() !== "") {
       if (editingIndex !== null) {
-        // 🛠 Editar tarea existente
-        const updatedTasks = tasks.map((task, i) =>
-          i === editingIndex ? { ...task, text: newTask } : task
-        );
-        setTasks(updatedTasks);
-        setEditingIndex(null); // Resetear estado de edición
+        // Editar tarea existente
+        setTasks((prevTasks) => {
+          const updatedTasks = prevTasks.map((task, i) =>
+            i === editingIndex ? { ...task, text: newTask } : task
+          );
+          return updatedTasks;
+        });
+
+        setEditingIndex(null);
+        showNotification("✅ Tarea editada correctamente.");
       } else {
-        // ➕ Agregar nueva tarea
-        setTasks([...tasks, { text: newTask, completed: false }]);
+        // Agregar nueva tarea
+        const newTaskObj = { text: newTask, completed: false, id: Date.now() };
+        setTasks((prevTasks) => [newTaskObj, ...prevTasks]);
+        showNotification("🆕 Tarea añadida correctamente.");
       }
       setNewTask("");
     }
   };
 
   const editTask = (index) => {
-    setNewTask(tasks[index].text); // Cargar texto de la tarea en el input
-    setEditingIndex(index); // Guardar índice de la tarea que estamos editando
+    setNewTask(tasks[index].text);
+    setEditingIndex(index);
+  };
+
+  const cancelEdit = () => {
+    setNewTask("");
+    setEditingIndex(null);
   };
 
   const deleteTask = (index) => {
-    const updatedTasks = tasks.filter((_, i) => i !== index);
-    setTasks(updatedTasks);
+    setTasks((prevTasks) => prevTasks.filter((_, i) => i !== index));
+    showNotification("🗑️ Tarea eliminada.");
   };
 
   const toggleComplete = (index) => {
-    const updatedTasks = tasks.map((task, i) =>
-      i === index ? { ...task, completed: !task.completed } : task
-    );
-    setTasks(updatedTasks);
+    setTasks((prevTasks) => {
+      const updatedTasks = prevTasks.map((task, i) =>
+        i === index ? { ...task, completed: !task.completed } : task
+      );
+
+      // Ordenar: tareas no completadas primero, completadas después
+      updatedTasks.sort((a, b) => a.completed - b.completed || b.id - a.id);
+
+      // Notificación según estado de la tarea
+      const task = updatedTasks.find((_, i) => i === index);
+      showNotification(task.completed ? "✅ Tarea completada." : "⏪ Tarea restaurada.");
+
+      return updatedTasks;
+    });
   };
 
   return (
@@ -71,6 +101,7 @@ function App() {
           setNewTask={setNewTask}
           addOrUpdateTask={addOrUpdateTask}
           editingIndex={editingIndex}
+          cancelEdit={cancelEdit} // Se pasa el botón de cancelar edición
         />
         <TaskList
           tasks={tasks}
@@ -78,6 +109,7 @@ function App() {
           deleteTask={deleteTask}
           toggleComplete={toggleComplete}
         />
+        {notification && <Notification message={notification} onClose={() => setNotification(null)} />}
       </div>
     </div>
   );
